@@ -1,4 +1,16 @@
 module QueryTrace
+  class << self
+    def trace_queries
+      @trace_queries ||= false
+    end
+
+    attr_writer :trace_queries
+
+    def trace_queries?
+      trace_queries ? true : false
+    end
+  end
+
   def self.append_features(klass)
     super
     klass.class_eval do
@@ -17,11 +29,10 @@ module QueryTrace
   def log_info_with_trace(sql, name, runtime)
     log_info_without_trace(sql, name, runtime)
     
-    return unless @logger and @logger.debug?
-    return if / Columns$/ =~ name
-
-    trace = clean_trace(caller[2..-1])
-    @logger.debug(format_trace(trace))
+    if @logger && QueryTrace.trace_queries? && !(name =~ / Columns$/)
+      trace = clean_trace(caller[2..-1])
+      @logger.debug(format_trace(trace))
+    end
   end
   
   def format_trace(trace)
